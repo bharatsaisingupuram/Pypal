@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PyPal - Python on your phone</title>
+<style>
+:root{--bg:#fff3f9;--card:#fff;--ink:#3a2b4d;--mut:#8d7ca0;--pri:#ff7eb6;--pri2:#a98bff;--ok:#1fae82;--err:#f0405c;--line:#f2d6e8;--key:#fdeaf4;--code:#fffafd;font-family:"Nunito","Trebuchet MS",system-ui,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#20172d;--card:#2c2140;--ink:#f4e9ff;--mut:#b5a3cc;--line:#42325c;--key:#3a2c52;--code:#251b36}}
+:root[data-theme=dark]{--bg:#20172d;--card:#2c2140;--ink:#f4e9ff;--mut:#b5a3cc;--line:#42325c;--key:#3a2c52;--code:#251b36}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink)}
+button{font:inherit;color:inherit;border:0;cursor:pointer}
+#app{height:100%;display:flex;flex-direction:column;max-width:900px;margin:auto}
+header{display:flex;align-items:center;gap:5px;padding:6px 8px;flex-wrap:nowrap}
+header b{font-size:17px;white-space:nowrap}
+.sp{flex:1}
+.chip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:11px;padding:3px 9px;border-radius:99px;background:var(--key);color:var(--mut)}
+.hb{flex:none;padding:7px 10px;border-radius:14px;background:var(--card);border:2px solid var(--line);font-weight:700}
+#run{background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;border:0}
+main{flex:1;min-height:0;position:relative}
+.view{display:none;position:absolute;inset:0;padding:0 10px 6px;flex-direction:column;gap:6px;overflow:hidden}
+.view.on{display:flex}
+#files,#tools,.tools,#ptabs{display:flex;gap:6px;overflow-x:auto;flex:none;scrollbar-width:none}
+.fc,.tb{flex:none;padding:6px 12px;border-radius:12px;background:var(--card);border:2px solid var(--line);font-size:14px}
+.fc.on{border-color:var(--pri);font-weight:800}
+.tb{background:var(--key);border:0;font-weight:700}
+#ed{flex:1;min-height:70px;font-size:14px;width:100%;resize:none;border:2px solid var(--line);border-radius:16px;padding:10px;background:var(--code);color:var(--ink);font-family:ui-monospace,Menlo,Consolas,monospace;line-height:1.5;tab-size:4;white-space:pre;overflow:auto}
+#ed:focus{outline:none;border-color:var(--pri2)}
+#pal{flex:none;background:var(--card);border:2px solid var(--line);border-radius:16px;padding:6px;display:flex;flex-direction:column;gap:6px}
+#keys{flex:none;display:flex;flex-wrap:wrap;gap:5px;height:120px;overflow-y:auto;align-content:flex-start}
+.k{min-width:34px;height:36px;padding:0 9px;border-radius:10px;background:var(--key);font:600 15px ui-monospace,Menlo,monospace;touch-action:manipulation}
+.k:active{background:var(--pri);color:#fff}
+.k.w{font-family:inherit}
+#bar{display:flex;gap:5px}
+#bar .k{flex:1;min-width:0;padding:0;background:linear-gradient(var(--key),var(--key));outline:2px solid var(--line)}
+pre{margin:0;flex:1;overflow:auto;background:var(--code);border:2px solid var(--line);border-radius:16px;padding:10px;font:14px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-word}
+.e{color:var(--err)}.o{color:var(--ok)}.m{color:var(--mut)}
+#stdin{flex:none;height:54px;border:2px solid var(--line);border-radius:12px;padding:8px;background:var(--card);color:var(--ink);font:14px ui-monospace,monospace;resize:none}
+.list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.item{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;text-align:left;font-size:14px}
+.item small{color:var(--mut);display:block;margin-top:2px}
+.tools{display:flex;gap:6px;flex:none}
+.item.o{color:var(--ok)}
+.tin{flex:none;display:flex;gap:6px;align-items:center}
+#tin{flex:1;min-width:0;padding:10px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:15px ui-monospace,monospace}
+nav{display:flex;background:var(--card);border-top:2px solid var(--line);padding:4px}
+nav button{flex:1;background:none;font-size:11px;padding:5px 0;border-radius:12px;color:var(--mut);position:relative}
+nav button span{display:block;font-size:20px}
+nav button.on{color:var(--ink);background:var(--key);font-weight:800}
+#bd{position:absolute;top:0;right:8px;background:var(--err);color:#fff;border-radius:99px;font-size:10px;padding:0 5px;display:none}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.on{opacity:1}
+</style></head><body>
+<div id="app">
+<header><b>🐍 PyPal</b><span class="chip" id="st">Loading Python…</span><span class="sp"></span>
+<button class="hb" id="run">▶ Run</button><button class="hb" id="dbg" title="Debug run">🐞</button><button class="hb" id="stop" title="Stop">■</button></header>
+<main>
+<section class="view on" id="v-code">
+<div id="files"></div>
+<div id="tools"><button class="tb" id="new">＋ New file</button><button class="tb" id="save">💾 Save</button><button class="tb" id="dl">⬇ Download</button><button class="tb" id="sys">⌨ System keyboard: off</button><button class="tb" id="pt">🎨 Show/hide keys</button></div>
+<textarea id="ed" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" inputmode="none" aria-label="Python code editor"></textarea>
+<div id="pal"><div id="ptabs"></div><div id="keys"></div>
+<div id="bar"></div></div>
+</section>
+<section class="view" id="v-out"><pre id="out"><span class="m">Press ▶ Run to see your output here ✨</span></pre>
+<textarea id="stdin" placeholder="Input for input() — one line per call"></textarea>
+<div class="tools"><button class="tb" id="clr">🧹 Clear output</button></div></section>
+<section class="view" id="v-prob"><div class="list" id="probs"></div><div class="tools"><button class="tb" id="clp">🧹 Clear problems</button></div></section>
+<section class="view" id="v-dbg"><pre id="con"></pre><div class="tools"><button class="tb" id="clc">🧹 Clear console</button></div></section>
+<section class="view" id="v-term"><pre id="tout"><span class="m">Python terminal. Type a line and press Enter.&#10;</span></pre>
+<div class="tin"><b id="pr">&gt;&gt;&gt;</b><input id="tin" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="print('hi')" aria-label="Terminal input"></div></section>
+<section class="view" id="v-his"><div class="list" id="hist"></div></section>
+</main>
+<nav id="nav">
+<button data-v="code" class="on"><span>✏️</span>Code</button><button data-v="out"><span>🌸</span>Output</button>
+<button data-v="prob"><i id="bd"></i><span>⚠️</span>Problems</button><button data-v="dbg"><span>🐞</span>Console</button><button data-v="term"><span>💻</span>Terminal</button>
+<button data-v="his"><span>🕘</span>History</button></nav>
+</div>
+<div id="toast"></div>
+
+<script type="text/plain" id="w">
+let py,inq=[];
+const P=(t,d)=>postMessage(Object.assign({t:t},d));
+const BOOT=`
+import sys,traceback,code
+_ev=[]
+def _run(src,dbg=False):
+    g={'__name__':'__main__'}
+    try:
+        c=compile(src,'main.py','exec')
+    except SyntaxError as e:
+        sys.stderr.write('SyntaxError (line %s): %s'%(e.lineno,e.msg))
+        return [e.lineno or 1,'SyntaxError: '+str(e.msg)]
+    def tr(f,ev,a):
+        if f.f_code.co_filename!='main.py': return None
+        if ev=='line' and len(_ev)<400:
+            v={k:repr(x)[:30] for k,x in f.f_locals.items() if not k.startswith('_') and not callable(x) and type(x).__name__!='module'}
+            _ev.append('line %d  %s'%(f.f_lineno,v))
+        return tr
+    if dbg: sys.settrace(tr)
+    try:
+        exec(c,g)
+    except SystemExit:
+        pass
+    except BaseException as e:
+        sys.settrace(None)
+        ln=[t.lineno for t in traceback.extract_tb(e.__traceback__) if t.filename=='main.py']
+        sys.stderr.write(''.join(traceback.format_exception(type(e),e,e.__traceback__.tb_next)))
+        return [ln[-1] if ln else 0,type(e).__name__+': '+str(e)]
+    finally:
+        sys.settrace(None)
+    return None
+def _evs():
+    r=list(_ev); _ev.clear(); return r
+_con=code.InteractiveConsole({'__name__':'__console__'})
+`;
+onmessage=async m=>{const d=m.data;
+ try{
+  if(d.t==='run'){inq=d.stdin?d.stdin.split('\n'):[];py.globals.set('_s',d.code);py.globals.set('_d',!!d.dbg);
+   let r=await py.runPythonAsync('_run(_s,_d)');if(r&&r.toJs)r=r.toJs();
+   P('done',{res:r||null,ev:py.runPython('_evs()').toJs()});}
+  else if(d.t==='repl'){inq=[];py.globals.set('_l',d.line);P('rdone',{more:py.runPython('_con.push(_l)')});}
+ }catch(e){P('err',{s:String(e)});P(d.t==='run'?'done':'rdone',{res:null,ev:[],more:false});}
+};
+(async()=>{try{
+ const B=['https://cdn.jsdelivr.net/pyodide/v0.26.4/full/','https://cdn.jsdelivr.net/npm/pyodide@0.26.4/'];let er;
+ for(const b of B){try{await IMP(b+'pyodide.js');py=await loadPyodide({indexURL:b});er=null;break}catch(e){er=e}}
+ if(er)throw er;
+ py.setStdout({batched:s=>P('out',{s:s})});py.setStderr({batched:s=>P('err',{s:s})});
+ py.setStdin({stdin:()=>inq.length?inq.shift():undefined});
+ await py.runPythonAsync(BOOT);P('ready');
+}catch(e){P('fail',{s:String(e)});}})();
+</script>
+
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)};
+var ed=$("ed"),W,ready=false,busy=false,timer=0,mode="run",cur="main.py",files={},hist=[],undo=[],sysKb=false,shift=false,tabName="Abc";
+var DEF="# Welcome to PyPal! 🐍\nname = input(\"Your name? \")\nprint(\"Hello,\", name, \"✨\")\nfor i in range(1, 4):\n    print(i, \"x 7 =\", i * 7)\n";
+/* ---------- storage (always guarded) ---------- */
+function ld(k,f){try{var v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}}
+files=ld("pypal.files",null);if(!files||typeof files!=="object"||!Object.keys(files).length)files={"main.py":DEF};
+cur=ld("pypal.cur","main.py");if(!(cur in files))cur=Object.keys(files)[0];
+hist=ld("pypal.hist",[]);if(!Array.isArray(hist))hist=[];
+function toast(t){var e=$("toast");e.textContent=t;e.className="on";clearTimeout(toast.t);toast.t=setTimeout(function(){e.className=""},1600)}
+function setSt(t){$("st").textContent=t}
+/* ---------- views ---------- */
+function go(v){document.querySelectorAll(".view").forEach(function(s){s.classList.toggle("on",s.id==="v-"+v)});
+ document.querySelectorAll("#nav button").forEach(function(b){b.classList.toggle("on",b.dataset.v===v)});
+ if(v==="his")rHist();if(v==="term")$("tin").focus()}
+$("nav").onclick=function(e){var b=e.target.closest("button");if(b)go(b.dataset.v)};
+/* ---------- output helpers ---------- */
+function add(el,txt,cls){var s=document.createElement("span");if(cls)s.className=cls;s.textContent=txt+"\n";el.appendChild(s);
+ while(el.childNodes.length>2000)el.removeChild(el.firstChild);el.scrollTop=el.scrollHeight}
+function log(t,c){add($("con"),new Date().toLocaleTimeString()+"  "+t,c)}
+/* ---------- worker ---------- */
+var mainMode=false,mainH=null;
+function post(m){if(mainMode){setTimeout(function(){mainH({data:m})},30)}else W.postMessage(m)}
+function fallback(why){log(why+" - switching to main-thread mode","m");try{if(W)W.terminate()}catch(e){}mainMode=true;startMain($("w").textContent)}
+function startMain(src){try{
+ var imp=function(u){return new Promise(function(res,rej){var s=document.createElement("script");s.src=u;s.onload=res;s.onerror=function(){rej(new Error("could not load "+u))};document.head.appendChild(s)})};
+ var pm=function(d){setTimeout(function(){onMsg({data:d})},0)};
+ mainH=new Function("postMessage","IMP","var onmessage;"+src+";return function(){return onmessage}")(pm,imp)()}
+ catch(e){setSt("Python failed to load");log(String(e),"e")}}
+function spawn(){ready=false;setSt("Loading Python… (first time ~10 MB)");var src=$("w").textContent;
+ if(mainMode){startMain(src);return}
+ try{var u=URL.createObjectURL(new Blob(["const IMP=u=>importScripts(u);"+src],{type:"text/javascript"}));W=new Worker(u);W.onmessage=onMsg;
+  W.onerror=function(e){if(!ready)fallback("Worker error: "+(e.message||"could not start"));else log("Worker error: "+e.message,"e")}}
+ catch(e){fallback(String(e))}}
+function onMsg(m){var d=m.data,t=mode==="term"?$("tout"):$("out");
+ if(d.t==="ready"){ready=true;setSt("Ready ✨");log("Python is ready","o")}
+ else if(d.t==="fail"){if(!mainMode){fallback("Worker could not load Python: "+d.s);return}setSt("Offline? Reload");log("Could not load Python: "+d.s,"e");toast("Python could not load. Check your internet.")}
+ else if(d.t==="out")add(t,d.s);
+ else if(d.t==="err")add(t,d.s,"e");
+ else if(d.t==="done"){fin();var r=d.res;
+  (d.ev||[]).forEach(function(l){log(l,"m")});
+  if(r){prob(r[0],r[1]);add($("out"),"✗ Stopped with an error (see Problems tab)","e")}else{okProb();add($("out"),"✓ Finished","o")}
+  addHist(!r)}
+ else if(d.t==="rdone"){fin();$("pr").textContent=d.more?"...":">>>";$("tin").focus()}}
+function fin(){busy=false;clearTimeout(timer);setSt("Ready ✨")}
+function kill(msg){clearTimeout(timer);busy=false;if(mainMode){toast("Stop is not available in this mode");return}try{W.terminate()}catch(e){}
+ add(mode==="term"?$("tout"):$("out"),msg,"e");log(msg,"e");spawn()}
+function begin(){if(!ready){toast("Python is still loading…");return false}if(busy)return false;
+ busy=true;setSt("Running…");if(!mainMode)timer=setTimeout(function(){kill("■ Stopped: ran longer than 15 seconds. Python restarted.")},15000);return true}
+/* ---------- run / debug ---------- */
+function run(dbg){commit();if(!begin())return;mode="run";$("out").textContent="";$("con").textContent=dbg?"":$("con").textContent;
+ $("probs").textContent="";badge(0);go(dbg?"dbg":"out");if(dbg)log("Debug run: every line executed is listed below","m");
+ post({t:"run",code:ed.value,stdin:$("stdin").value,dbg:dbg})}
+function prob(line,msg){var b=document.createElement("button");b.className="item e";b.textContent="✗ "+msg;
+ var s=document.createElement("small");s.textContent=line?"Line "+line+" · tap to jump":"Tap to open code";b.appendChild(s);
+ b.onclick=function(){go("code");if(line)selLine(line)};$("probs").appendChild(b);badge(1)}
+function emptyProb(){var p=document.createElement("div");p.className="item";p.textContent="Run your code to check for problems ✨";$("probs").appendChild(p)}
+function okProb(){var p=document.createElement("div");p.className="item o";p.textContent="✓ No problems found 🎉";$("probs").appendChild(p)}
+function badge(n){var b=$("bd");b.style.display=n?"block":"none";b.textContent=n}
+function selLine(n){var L=ed.value.split("\n"),s=0,i;for(i=0;i<n-1&&i<L.length;i++)s+=L[i].length+1;
+ var e=s+(L[n-1]||"").length;ed.focus({preventScroll:true});ed.setSelectionRange(s,e);ed.scrollTop=Math.max(0,(n-3)*22)}
+$("run").onclick=function(){run(false)};$("dbg").onclick=function(){run(true)};
+$("stop").onclick=function(){if(busy)kill("■ Stopped by you. Python restarted.");else toast("Nothing is running")};
+$("clr").onclick=function(){$("out").textContent=""};$("clc").onclick=function(){$("con").textContent=""};$("clp").onclick=function(){$("probs").textContent="";badge(0);emptyProb()};
+/* ---------- terminal ---------- */
+$("tin").addEventListener("keydown",function(e){if(e.key!=="Enter")return;var l=this.value;
+ if(!ready){toast("Python is still loading…");return}if(busy)return;
+ add($("tout"),$("pr").textContent+" "+l,"m");this.value="";if(!begin())return;mode="term";post({t:"repl",line:l})});
+/* ---------- files ---------- */
+function commit(){files[cur]=ed.value}
+function persist(){commit();return sv("pypal.files",files)&&sv("pypal.cur",cur)}
+function rFiles(){var c=$("files");c.textContent="";Object.keys(files).forEach(function(n){var b=document.createElement("button");
+ b.className="fc"+(n===cur?" on":"");b.textContent="📄 "+n;b.onclick=function(){if(n===cur)return;commit();cur=n;ed.value=files[n];undo=[];rFiles()};
+ if(n===cur&&Object.keys(files).length>1){var x=document.createElement("span");x.textContent="  ✕";x.onclick=function(ev){ev.stopPropagation();
+  if(confirm("Delete "+n+"?")){delete files[n];cur=Object.keys(files)[0];ed.value=files[cur];persist();rFiles()}};b.appendChild(x)}c.appendChild(b)})}
+function newFile(name,code){name=(name||"").trim().replace(/[^\w.\- ]/g,"");if(!name)return false;if(!/\.py$/.test(name))name+=".py";
+ if(name in files){toast("That name already exists");return false}commit();files[name]=code||"";cur=name;ed.value=files[name];undo=[];persist();rFiles();return true}
+$("new").onclick=function(){var n=prompt("File name","untitled.py");if(n)newFile(n,"")};
+$("save").onclick=function(){toast(persist()?"Saved ✓":"Could not save (storage is full or blocked)")};
+$("dl").onclick=function(){commit();var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([ed.value],{type:"text/x-python"}));a.download=cur;
+ document.body.appendChild(a);a.click();a.remove()};
+var at;ed.addEventListener("input",function(){clearTimeout(at);at=setTimeout(persist,700)});
+/* ---------- history & practice ---------- */
+function addHist(ok){hist.unshift({t:Date.now(),f:cur,ok:ok,c:ed.value});hist=hist.slice(0,40);sv("pypal.hist",hist)}
+function rHist(){var c=$("hist");c.textContent="";if(!hist.length){c.innerHTML="";var p=document.createElement("div");p.className="item";p.textContent="No runs yet. Press ▶ Run and your runs show up here.";c.appendChild(p);return}
+ hist.forEach(function(h){var b=document.createElement("button");b.className="item";b.textContent=(h.ok?"✓ ":"✗ ")+h.f+" · "+new Date(h.t).toLocaleString();
+ var s=document.createElement("small");s.textContent=h.c.split("\n").slice(0,2).join(" ⏎ ").slice(0,90)+" — tap to open as a new file";b.appendChild(s);
+ b.onclick=function(){var n="history_"+(Date.now()%100000)+".py";if(newFile(n,h.c)){go("code");toast("Opened "+n)}};c.appendChild(b)})}
+/* ---------- on-screen keys ---------- */
+var KW="False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield match case".split(" ");
+var BI="print input len range int float str list dict set tuple bool type sum min max abs round sorted reversed enumerate zip map filter open isinstance any all pow divmod format chr ord id dir help eval exec super object iter next slice bytes hex bin oct complex frozenset getattr setattr hasattr callable vars".split(" ");
+var ME=".append( .pop( .split( .join( .strip( .upper( .lower( .replace( .items() .keys() .values() .format( .sort( .remove( .insert( .extend( .count( .index( .startswith( .endswith( .find( .get( .update( .add( .read() .write( .close() .title() .isdigit()".split(" ");
+var MO="math random datetime json os sys re collections itertools string time statistics functools".split(" ").map(function(m){return"import "+m});
+var SY="( ) [ ] { } : , . = == != < > <= >= + - * / // % ** += -= *= /= \" ' \"\"\" # _ \\ | & ^ ~ ! ; @ -> :=".split(" ");
+var DG="0 1 2 3 4 5 6 7 8 9".split(" ");
+var SN=["def ¦():\n    pass","for i in range(¦):\n    ","if ¦:\n    ","elif ¦:\n    ","else:\n    ","while ¦:\n    ","class ¦:\n    def __init__(self):\n        pass","try:\n    ¦\nexcept Exception as e:\n    print(e)","print(f\"¦\")","with open(\"¦\") as f:\n    ","[x for x in ¦]","lambda ¦: ","name = input(\"¦\")","if __name__ == \"__main__\":\n    ¦"];
+var AB="abcdefghijklmnopqrstuvwxyz".split("");
+var TABS={"Abc":function(){return AB.map(function(c){return shift?c.toUpperCase():c}).concat(["Aa"])},"123 #":function(){return DG.concat(SY)},"Words":function(){return KW},"Funcs":function(){return BI.map(function(b){return b+"("})},
+".Methods":function(){return ME},"Snippets":function(){return SN},"Imports":function(){return MO}};
+function ins(txt){if(sysKb===false||true){}undo.push([ed.value,ed.selectionStart,ed.selectionEnd]);if(undo.length>100)undo.shift();
+ var c=txt.i
